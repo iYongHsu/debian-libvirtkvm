@@ -1,0 +1,14 @@
+FROM debian:trixie-slim
+LABEL maintainer='iYong'
+RUN echo 'deb http://mirrors.aliyun.com/debian trixie main\ndeb http://mirrors.aliyun.com/debian-security trixie-security main\ndeb http://mirrors.aliyun.com/debian trixie-updates main' >/etc/apt/sources.list \
+    && apt update -y \
+    && apt install -y qemu-system-x86 qemu-utils ipxe-qemu libvirt-daemon-system libvirt-clients bridge-utils virtinst virt-manager seabios vgabios gir1.2-spiceclientgtk-3.0 xauth \
+    && apt install -y fonts-noto* xz-utils vim wget \
+    && apt install -y openssh-server \
+    && sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/g" /etc/ssh/sshd_config \
+    && sed -i "s/#Port 22/Port 1022/g" /etc/ssh/sshd_config && sed -i "s/#X11Forwarding yes/X11Forwarding yes/g" /etc/ssh/sshd_config \
+    && sed -i "s/#X11DisplayOffset/X11DisplayOffset/g" /etc/ssh/sshd_config && sed -i "s/#X11UseLocalhost yes/X11UseLocalhost no/g" /etc/ssh/sshd_config \
+    && sed -i 's/#user = "libvirt-qemu"/user = "root"/' /etc/libvirt/qemu.conf && sed -i 's/#group = "libvirt-qemu"/group = "root"/' /etc/libvirt/qemu.conf \
+    && echo 'root:debian' | chpasswd \
+    && echo '#!/bin/bash\nLOGTIME=$(date "+%Y-%m-%d %H:%M:%S")\necho "[$LOGTIME] startup run..."\nservice ssh start\nlibvirtd -d && virtlogd -d' >/init.sh && chmod +x /init.sh \
+    && echo 'if [ -f /init.sh ]; then\n      ./init.sh\nfi' >>/root/.bashrc
